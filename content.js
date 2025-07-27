@@ -53,11 +53,11 @@
     // Vervang volledige pagina
     const blockingHTML = `
       <!DOCTYPE html>
-      <html lang="nl">
+      <html lang="en">
       <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>🧠 FocusFlow - Website Geblokkeerd</title>
+        <title>🧠 FocusFlow - Website Blocked</title>
         <style>
           * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
@@ -130,31 +130,32 @@
       <body>
         <div class="container">
           <div class="brain-icon">🧠</div>
-          <h1>Website Geblokkeerd</h1>
+          <h1>Website Blocked</h1>
           <div class="blocked-site"><strong>${window.location.hostname}</strong></div>
           <div class="message">
-            Deze website is geblokkeerd tijdens je focus sessie om je geconcentreerd te houden op je doelen.
+            This website has been blocked during your focus session to help you stay concentrated on your goals.
           </div>
           <div class="stats">
-            <div>⏰ Tijd<br><strong>${new Date().toLocaleTimeString('nl-NL')}</strong></div>
-            <div>🎯 Status<br><strong>Focus Actief</strong></div>
-            <div>💪 Focus<br><strong>Sterk Blijven!</strong></div>
+            <div>⏰ Time<br><strong>${new Date().toLocaleTimeString('en-US')}</strong></div>
+            <div>🎯 Status<br><strong>Focus Active</strong></div>
+            <div>💪 Focus<br><strong>Stay Strong!</strong></div>
           </div>
-          <button class="btn btn-primary" onclick="returnToFocusFlow()">
-            🔄 Terug naar FocusFlow
+          <button class="btn btn-primary" id="returnButton">
+            🔄 Back to FocusFlow
           </button>
-          <button class="btn btn-danger" onclick="proceedAnyway()">
-            ⚠️ Toch Doorgaan (-10 Score)
+          <button class="btn btn-danger" id="proceedButton">
+            ⚠️ Continue Anyway (-10 Score)
           </button>
         </div>
 
         <script>
+          // Define functions first
           function returnToFocusFlow() {
-            window.open('https://focusflow.alwaysdata.net/', '_self');
+            window.open('https://focusflow.alwaysdata.net/focus', '_self');
           }
           
           function proceedAnyway() {
-            if (confirm('⚠️ Je focus score wordt verlaagd.\\n\\nWeet je zeker dat je door wilt gaan?')) {
+            if (confirm('⚠️ Your focus score will be reduced.\n\nAre you sure you want to continue?')) {
               chrome.storage.local.set({
                 focusflow_temporary_allow: window.location.hostname,
                 focusflow_temporary_allow_timestamp: Date.now()
@@ -163,6 +164,10 @@
               });
             }
           }
+
+          // Add event listeners after functions are defined
+          document.getElementById('returnButton').addEventListener('click', returnToFocusFlow);
+          document.getElementById('proceedButton').addEventListener('click', proceedAnyway);
         </script>
       </body>
       </html>
@@ -247,7 +252,7 @@
   window.addEventListener('beforeunload', (event) => {
     if (focusActive && shouldBlockSite()) {
       event.preventDefault();
-      event.returnValue = 'Deze website is geblokkeerd tijdens je focus sessie.';
+      event.returnValue = 'This website is blocked during your focus session.';
       return event.returnValue;
     }
   });
