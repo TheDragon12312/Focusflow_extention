@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FocusFlow Extension</title>
+  <style>
+    body {
+      width: 380px;
+      min-height: 500px;
+      margin: 0;
+      padding: 20px;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    
+    .header h1 {
+      margin: 0;
+      font-size: 1.5rem;
+      font-weight: 700;
+    }
+    
+    .status {
+      text-align: center;
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 15px;
+      padding: 10px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.1);
+    }
+    
+    .status.active { background: rgba(40, 167, 69, 0.3); }
+    .status.inactive { background: rgba(220, 53, 69, 0.3); }
+    
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      margin: 8px 0;
+      transition: all 0.3s ease;
+    }
+    
+    .btn:hover {
+      transform: translateY(-1px);
+    }
+    
+    .btn-success { background: #28a745; color: white; }
+    .btn-success:hover { background: #218838; }
+    .btn-danger { background: #dc3545; color: white; }
+    .btn-danger:hover { background: #c82333; }
+    .btn-primary { background: #007bff; color: white; }
+    .btn-primary:hover { background: #0056b3; }
+    .btn-secondary { background: #6c757d; color: white; }
+    .btn-secondary:hover { background: #545b62; }
+    
+    /* ✅ NIEUWE STIJLEN VOOR SITE TOEVOEGEN */
+    .add-site-section {
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+    
+    .add-site-section h4 {
+      margin: 0 0 15px 0;
+      font-size: 1.1rem;
+    }
+    
+    .input-group {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+    
+    .site-input {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: rgba(255, 255, 255, 0.9);
+      color: #333;
+    }
+    
+    .site-input::placeholder {
+      color: #666;
+    }
+    
+    .add-btn {
+      padding: 10px 15px;
+      background: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: background 0.3s ease;
+    }
+    
+    .add-btn:hover {
+      background: #218838;
+    }
+    
+    .add-btn:disabled {
+      background: #6c757d;
+      cursor: not-allowed;
+    }
+    
+    .quick-add {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      margin-top: 10px;
+    }
+    
+    .quick-add-btn {
+      padding: 5px 10px;
+      background: rgba(255, 255, 255, 0.2);
+      color: white;
+      border: none;
+      border-radius: 15px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    
+    .quick-add-btn:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: scale(1.05);
+    }
+    
+    .sites-section {
+      margin: 20px 0;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+    
+    .sites-list {
+      list-style: none;
+      padding: 0;
+      margin: 10px 0 0 0;
+      max-height: 150px;
+      overflow-y: auto;
+    }
+    
+    .site-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+      font-size: 0.9rem;
+    }
+    
+    .site-name {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .remove-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 0.7rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    
+    .remove-btn:hover {
+      background: #c82333;
+    }
+    
+    .no-sites {
+      text-align: center;
+      font-style: italic;
+      opacity: 0.7;
+      padding: 20px 0;
+    }
+    
+    .stats {
+      margin-top: 20px;
+      padding: 15px;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 8px;
+    }
+    
+    .stat-item {
+      display: flex;
+      justify-content: space-between;
+      margin: 8px 0;
+      font-size: 0.9rem;
+    }
+    
+    .stat-label { font-weight: 600; }
+    .stat-value { opacity: 0.8; }
+    
+    .error-message, .success-message {
+      display: none;
+      padding: 10px;
+      border-radius: 8px;
+      margin: 10px 0;
+      font-size: 0.9rem;
+    }
+    
+    .error-message {
+      background: rgba(220, 53, 69, 0.8);
+      color: white;
+    }
+    
+    .success-message {
+      background: rgba(40, 167, 69, 0.8);
+      color: white;
+    }
+    
+    .footer {
+      margin-top: 20px;
+      text-align: center;
+      font-size: 0.8rem;
+      opacity: 0.7;
+    }
+    
+    /* Scrollbar styling */
+    .sites-list::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    .sites-list::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 3px;
+    }
+    
+    .sites-list::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>🧠 FocusFlow</h1>
+  </div>
+  
+  <div id="status" class="status">
+    🔄 Laden...
+  </div>
+  
+  <div id="error-message" class="error-message"></div>
+  <div id="success-message" class="success-message"></div>
+  
+  <button id="toggle-blocking" class="btn btn-success">
+    ▶️ Start Blocking
+  </button>
+  
+  <!-- ✅ NIEUWE SECTIE: SITE TOEVOEGEN -->
+  <div class="add-site-section">
+    <h4>🚫 Website Toevoegen</h4>
+    
+    <div class="input-group">
+      <input 
+        type="text" 
+        id="site-input" 
+        class="site-input" 
+        placeholder="bijv. youtube.com, facebook.com"
+      >
+      <button id="add-site-btn" class="add-btn">
+        ➕ Toevoegen
+      </button>
+    </div>
+    
+    <div class="quick-add">
+      <button class="quick-add-btn" data-site="youtube.com">📺 YouTube</button>
+      <button class="quick-add-btn" data-site="facebook.com">📘 Facebook</button>
+      <button class="quick-add-btn" data-site="instagram.com">📷 Instagram</button>
+      <button class="quick-add-btn" data-site="twitter.com">🐦 Twitter</button>
+      <button class="quick-add-btn" data-site="tiktok.com">🎵 TikTok</button>
+      <button class="quick-add-btn" data-site="reddit.com">🤖 Reddit</button>
+    </div>
+  </div>
+  
+  <!-- ✅ VERBETERDE SITES LIJST -->
+  <div class="sites-section">
+    <h4>Geblokkeerde Websites (<span id="sites-count">0</span>)</h4>
+    <div id="blocked-sites">
+      <p class="no-sites">Geen sites geblokkeerd</p>
+    </div>
+  </div>
+  
+  <button id="open-settings" class="btn btn-primary">
+    ⚙️ Open FocusFlow App
+  </button>
+  
+  <div class="stats">
+    <h4 style="margin: 0 0 10px 0;">Statistieken</h4>
+    <div id="stats">
+      <div class="stat-item">
+        <span class="stat-label">Status:</span>
+        <span class="stat-value">Laden...</span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="footer">
+    <p>💡 <strong>Enter</strong> om site toe te voegen • <strong>Space</strong> om te togglen</p>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html>

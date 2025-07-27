@@ -1,0 +1,62 @@
+{
+  "manifest_version": 3,
+  "name": "FocusFlow Website Blocker",
+  "version": "1.0",
+  "description": "Blocks distracting websites during focus sessions to help you stay concentrated on your goals",
+  
+  "permissions": [
+    "storage",
+    "activeTab",
+    "notifications"
+  ],
+  
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  
+  "content_scripts": [{
+    "matches": ["<all_urls>"],
+    "js": ["content.js"],
+    "run_at": "document_start",
+    "all_frames": true
+  }],
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FocusFlow Website Blocker",
+    "default_icon": {
+      "16": "icon16.png",
+      "48": "icon48.png",
+      "128": "icon128.png"
+    }
+  },
+  
+  "icons": {
+    "16": "icon16.png",
+    "48": "icon48.png",
+    "128": "icon128.png"
+  },
+  
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:5173/focus",
+      "https://focusflow.alwaysdata.net/focus"
+    ]
+  },
+  
+  "web_accessible_resources": [{
+    "resources": [
+      "*.html",
+      "*.css", 
+      "*.js",
+      "*.png"
+    ],
+    "matches": ["<all_urls>"]
+  }],
+  
+  "minimum_chrome_version": "88"
+}
