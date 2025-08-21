@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>FocusFlow - Website Blocked</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+        .container {
+            text-align: center;
+            max-width: 500px;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+        .icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin: 0 0 10px;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        .site-name {
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+            word-break: break-all;
+        }
+        .message {
+            font-size: 1.1em;
+            margin: 30px 0;
+            line-height: 1.6;
+        }
+        .actions {
+            margin-top: 40px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 15px 30px;
+            margin: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50px;
+            color: white;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+        .btn.primary {
+            background: #4CAF50;
+            border-color: #4CAF50;
+        }
+        .btn.primary:hover {
+            background: #45a049;
+        }
+        .stats {
+            margin-top: 30px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+        .timer {
+            font-size: 1.5em;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">🚫</div>
+        <h1>Website Blocked</h1>
+        
+        <div class="site-name" id="blocked-site">
+            Loading...
+        </div>
+        
+        <div class="message">
+            This website is blocked during your focus session.<br>
+            Stay focused on your goals! 🎯
+        </div>
+        
+        <div class="timer" id="session-timer">
+            Session Active
+        </div>
+        
+        <div class="actions">
+            <button class="btn primary" onclick="returnToFocus()">
+                🎯 Return to Focus
+            </button>
+            <button class="btn" onclick="takeBreak()">
+                ☕ Take a 5 Min Break
+            </button>
+        </div>
+        
+        <div class="stats">
+            <div>Distraction blocked at <span id="block-time"></span></div>
+            <div>Keep going! Every blocked distraction is progress! 💪</div>
+        </div>
+    </div>
+
+    <script>
+        // Parse URL parameters
+        const urlParams = new URLSearchParams(window.location.search);
+        const blockedSite = urlParams.get('site');
+        const sessionId = urlParams.get('sessionId');
+        
+        // Display blocked site
+        if (blockedSite) {
+            try {
+                const hostname = new URL(blockedSite).hostname;
+                document.getElementById('blocked-site').textContent = hostname;
+            } catch {
+                document.getElementById('blocked-site').textContent = blockedSite;
+            }
+        }
+        
+        // Display block time
+        document.getElementById('block-time').textContent = new Date().toLocaleTimeString();
+        
+        // Return to focus function
+        function returnToFocus() {
+            // Try to close tab or redirect to focus app
+            if (window.history.length > 1) {
+                window.history.back();
+            } else {
+                // Redirect to focus app
+                window.location.href = 'http://localhost:5173/focus';
+            }
+        }
+        
+        // Take break function
+        function takeBreak() {
+            // Send message to background script about break
+            chrome.runtime.sendMessage({
+                type: 'TAKE_BREAK',
+                sessionId: sessionId,
+                duration: 5
+            });
+            
+            // Close tab after short delay
+            setTimeout(() => {
+                window.close();
+            }, 1000);
+        }
+        
+        // Update timer every second
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('session-timer').textContent = 
+                'Blocked at ' + now.toLocaleTimeString();
+        }, 1000);
+        
+        // Motivational messages
+        const messages = [
+            "Your future self will thank you! 🌟",
+            "Every distraction blocked is progress! 💪", 
+            "Stay focused, you've got this! 🎯",
+            "Deep work leads to deep satisfaction! 🧠",
+            "Discipline is the bridge between goals and achievement! 🌉"
+        ];
+        
+        // Change message every 10 seconds
+        let messageIndex = 0;
+        setInterval(() => {
+            const messageElements = document.querySelectorAll('.stats div:last-child');
+            if (messageElements.length > 0) {
+                messageElements[0].textContent = messages[messageIndex % messages.length];
+                messageIndex++;
+            }
+        }, 10000);
+    </script>
+</body>
+</html>
