@@ -1,12 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "FocusFlow Website Blocker",
+  "name": "FocusFlow Extension",
   "version": "1.0",
-  "description": "Blocks distracting websites during focus sessions to help you stay concentrated on your goals",
+  "description": "Blocks distracting websites during focus sessions",
   
   "permissions": [
     "storage",
     "activeTab",
+    "tabs",
     "notifications"
   ],
   
@@ -14,70 +15,11 @@
     "<all_urls>"
   ],
   
-  "content_scripts": [{
-    "matches": ["<all_urls>"],
-    "js": ["content.js"],
-    "run_at": "document_start",
-    "all_frames": true
-  }],
-  
-  "background": {
-    "service_worker": "background.js"
-  },
-  
-  "action": {
-    "default_popup": "popup.html",
-    "default_title": "FocusFlow Website Blocker",
-    "default_icon": {
-      "16": "icon16.png",
-      "48": "icon48.png",
-      "128": "icon128.png"
-    }
-  },
-  
-  "icons": {
-    "16": "icon16.png",
-    "48": "icon48.png",
-    "128": "icon128.png"
-  },
-  
-  "externally_connectable": {
-    "matches": [
-      "http://localhost:5173/focus",
-      "https://focusflow.alwaysdata.net/focus"
-    ]
-  },
-  
-  "web_accessible_resources": [{
-    "resources": [
-      "*.html",
-      "*.css", 
-      "*.js",
-      "*.png"
-    ],
-    "matches": ["<all_urls>"]
-  }],
-  
-  "minimum_chrome_version": "88"
-}
-
-{
-  "manifest_version": 3,
-  "name": "FocusFlow Extension",
-  "version": "1.0",
-  
-  "permissions": [
-    "activeTab",
-    "storage",
-    "tabs"
-  ],
-  
   "externally_connectable": {
     "matches": [
       "http://localhost:*/*",
-      "https://localhost:*/*", 
-      "https://your-domain.com/*",
-      "<all_urls>"
+      "https://focusflow.alwaysdata.net/*",
+      "https://localhost:*/*"
     ]
   },
   
@@ -88,16 +30,23 @@
   "content_scripts": [
     {
       "matches": ["<all_urls>"],
-      "js": ["content.js"]
+      "js": ["content.js"],
+      "run_at": "document_start",
+      "all_frames": true
     }
   ],
   
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "FocusFlow Extension"
+  },
+  
   "web_accessible_resources": [
     {
-      "resources": ["icon.png"],
+      "resources": ["blocked.html", "icon.png"],
       "matches": ["<all_urls>"]
     }
-  ]
+  ],
+  
+  "minimum_chrome_version": "88"
 }
-
-
