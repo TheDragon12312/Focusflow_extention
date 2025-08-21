@@ -60,3 +60,44 @@
   
   "minimum_chrome_version": "88"
 }
+
+{
+  "manifest_version": 3,
+  "name": "FocusFlow Extension",
+  "version": "1.0",
+  
+  "permissions": [
+    "activeTab",
+    "storage",
+    "tabs"
+  ],
+  
+  "externally_connectable": {
+    "matches": [
+      "http://localhost:*/*",
+      "https://localhost:*/*", 
+      "https://your-domain.com/*",
+      "<all_urls>"
+    ]
+  },
+  
+  "background": {
+    "service_worker": "background.js"
+  },
+  
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
+  
+  "web_accessible_resources": [
+    {
+      "resources": ["icon.png"],
+      "matches": ["<all_urls>"]
+    }
+  ]
+}
+
+
