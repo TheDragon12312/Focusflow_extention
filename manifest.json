@@ -1,25 +1,25 @@
 {
   "manifest_version": 3,
   "name": "FocusFlow Extension",
-  "version": "1.0",
-  "description": "Blocks distracting websites during focus sessions",
+  "version": "1.0.0",
+  "description": "Focus & website blocking for productivity",
   
   "permissions": [
     "storage",
-    "activeTab",
     "tabs",
-    "notifications"
+    "activeTab"
   ],
   
   "host_permissions": [
-    "<all_urls>"
+    "https://focusflows.eu/*",
+    "https://focusflows.eu/*"
   ],
   
   "externally_connectable": {
     "matches": [
-      "http://localhost:*/*",
-      "https://focusflow.alwaysdata.net/*",
-      "https://localhost:*/*"
+    "https://focusflows.eu/*",
+    "https://focusflows.eu/*",
+    "https://focusflows.eu/*"
     ]
   },
   
@@ -31,22 +31,19 @@
     {
       "matches": ["<all_urls>"],
       "js": ["content.js"],
-      "run_at": "document_start",
-      "all_frames": true
+      "run_at": "document_start"
     }
   ],
   
   "action": {
     "default_popup": "popup.html",
-    "default_title": "FocusFlow Extension"
+    "default_title": "FocusFlow"
   },
   
   "web_accessible_resources": [
     {
-      "resources": ["blocked.html", "icon.png"],
+      "resources": ["*"],
       "matches": ["<all_urls>"]
     }
-  ],
-  
-  "minimum_chrome_version": "88"
+  ]
 }

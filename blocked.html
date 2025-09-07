@@ -1,193 +1,103 @@
 <!DOCTYPE html>
-<html>
+<html lang="nl">
 <head>
-    <meta charset="utf-8">
-    <title>FocusFlow - Website Blocked</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FocusFlow - Website Geblokkeerd</title>
     <style>
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             margin: 0;
             padding: 0;
-            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: white;
         }
+        
         .container {
-            text-align: center;
             max-width: 500px;
-            padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
-            border-radius: 20px;
-            backdrop-filter: blur(10px);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            padding: 20px;
+            text-align: center;
         }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 40px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+        }
+        
         .icon {
-            font-size: 80px;
+            font-size: 64px;
             margin-bottom: 20px;
         }
-        h1 {
-            margin: 0 0 10px;
-            font-size: 2.5em;
-            font-weight: 300;
+        
+        .title {
+            font-size: 28px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 16px;
         }
-        .site-name {
-            font-size: 1.2em;
-            margin: 20px 0;
-            padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 10px;
-            word-break: break-all;
-        }
+        
         .message {
-            font-size: 1.1em;
-            margin: 30px 0;
-            line-height: 1.6;
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 30px;
+            line-height: 1.5;
         }
-        .actions {
-            margin-top: 40px;
-        }
+        
         .btn {
             display: inline-block;
-            padding: 15px 30px;
-            margin: 10px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 50px;
+            padding: 14px 24px;
+            background: #3b82f6;
             color: white;
             text-decoration: none;
+            border-radius: 12px;
             font-weight: 600;
-            transition: all 0.3s ease;
-            cursor: pointer;
+            transition: all 0.2s ease;
+            margin: 0 8px 8px 0;
         }
+        
         .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: #2563eb;
             transform: translateY(-2px);
         }
-        .btn.primary {
-            background: #4CAF50;
-            border-color: #4CAF50;
+        
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.8);
+            color: #374151;
+            border: 1px solid rgba(0, 0, 0, 0.1);
         }
-        .btn.primary:hover {
-            background: #45a049;
-        }
-        .stats {
-            margin-top: 30px;
-            font-size: 0.9em;
-            opacity: 0.8;
-        }
-        .timer {
-            font-size: 1.5em;
-            margin: 20px 0;
-            font-weight: bold;
+        
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 1);
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="icon">🚫</div>
-        <h1>Website Blocked</h1>
-        
-        <div class="site-name" id="blocked-site">
-            Loading...
-        </div>
-        
-        <div class="message">
-            This website is blocked during your focus session.<br>
-            Stay focused on your goals! 🎯
-        </div>
-        
-        <div class="timer" id="session-timer">
-            Session Active
-        </div>
-        
-        <div class="actions">
-            <button class="btn primary" onclick="returnToFocus()">
-                🎯 Return to Focus
-            </button>
-            <button class="btn" onclick="takeBreak()">
-                ☕ Take a 5 Min Break
-            </button>
-        </div>
-        
-        <div class="stats">
-            <div>Distraction blocked at <span id="block-time"></span></div>
-            <div>Keep going! Every blocked distraction is progress! 💪</div>
+        <div class="card">
+            <div class="icon">🚫</div>
+            <h1 class="title">Website Geblokkeerd</h1>
+            <p class="message">
+                Deze website is geblokkeerd tijdens je focus sessie.<br>
+                Blijf gefocust op je taak!
+            </p>
+            <div>
+                <a href="https://focusflows.eu/focus" class="btn">🎯 Terug naar Focus</a>
+                <a href="https://focusflows.eu/dashboard" class="btn btn-secondary">📊 Dashboard</a>
+            </div>
         </div>
     </div>
 
     <script>
-        // Parse URL parameters
-        const urlParams = new URLSearchParams(window.location.search);
-        const blockedSite = urlParams.get('site');
-        const sessionId = urlParams.get('sessionId');
-        
-        // Display blocked site
-        if (blockedSite) {
-            try {
-                const hostname = new URL(blockedSite).hostname;
-                document.getElementById('blocked-site').textContent = hostname;
-            } catch {
-                document.getElementById('blocked-site').textContent = blockedSite;
-            }
-        }
-        
-        // Display block time
-        document.getElementById('block-time').textContent = new Date().toLocaleTimeString();
-        
-        // Return to focus function
-        function returnToFocus() {
-            // Try to close tab or redirect to focus app
-            if (window.history.length > 1) {
-                window.history.back();
-            } else {
-                // Redirect to focus app
-                window.location.href = 'http://localhost:5173/focus';
-            }
-        }
-        
-        // Take break function
-        function takeBreak() {
-            // Send message to background script about break
-            chrome.runtime.sendMessage({
-                type: 'TAKE_BREAK',
-                sessionId: sessionId,
-                duration: 5
-            });
-            
-            // Close tab after short delay
-            setTimeout(() => {
-                window.close();
-            }, 1000);
-        }
-        
-        // Update timer every second
-        setInterval(() => {
-            const now = new Date();
-            document.getElementById('session-timer').textContent = 
-                'Blocked at ' + now.toLocaleTimeString();
-        }, 1000);
-        
-        // Motivational messages
-        const messages = [
-            "Your future self will thank you! 🌟",
-            "Every distraction blocked is progress! 💪", 
-            "Stay focused, you've got this! 🎯",
-            "Deep work leads to deep satisfaction! 🧠",
-            "Discipline is the bridge between goals and achievement! 🌉"
-        ];
-        
-        // Change message every 10 seconds
-        let messageIndex = 0;
-        setInterval(() => {
-            const messageElements = document.querySelectorAll('.stats div:last-child');
-            if (messageElements.length > 0) {
-                messageElements[0].textContent = messages[messageIndex % messages.length];
-                messageIndex++;
-            }
-        }, 10000);
+        // Auto-redirect after 5 seconds
+        setTimeout(() => {
+            window.location.href = 'https://focusflows.eu/focus';
+        }, 5000);
     </script>
 </body>
 </html>

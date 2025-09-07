@@ -1,212 +1,321 @@
-// FocusFlow Extension Background Script
-console.log('🚀 FocusFlow Extension Background Script Started');
+// background.js (MV3) - FIX GET_STATUS case
+console.log('🚀 FocusFlow Background Script Starting...');
 
-// Extension state
-let isActive = false;
-let blockedSites = [];
-let currentSessionId = null;
-let blockedTabs = new Set();
+let sessionState = { 
+  isBlocking: false, 
+  blockedSites: [], 
+  sessionId: null, 
+  startTime: null 
+};
 
-// Listen for messages from external sources (web pages)
-chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => {
-  console.log('📨 Message received from external:', request, sender);
-  
-  switch (request.type) {
-    case 'HEALTH_CHECK':
-      console.log('💓 Health check received');
-      sendResponse({ 
-        status: 'connected', 
-        extensionId: chrome.runtime.id,
-        timestamp: Date.now(),
-        version: chrome.runtime.getManifest().version
-      });
-      return true;
-      
-    case 'START_BLOCKING':
-      isActive = true;
-      blockedSites = request.blockedSites || [];
-      currentSessionId = request.sessionId;
-      console.log('🚫 Blocking started:', blockedSites);
-      
-      // Store in chrome storage for persistence
-      chrome.storage.local.set({
-        isActive: true,
-        blockedSites: blockedSites,
-        sessionId: currentSessionId
-      });
-      
-      sendResponse({ success: true, message: 'Blocking started', sitesCount: blockedSites.length });
-      break;
-      
-    case 'STOP_BLOCKING':
-      isActive = false;
-      blockedSites = [];
-      currentSessionId = null;
-      blockedTabs.clear();
-      console.log('✅ Blocking stopped');
-      
-      chrome.storage.local.set({
-        isActive: false,
-        blockedSites: [],
-        sessionId: null
-      });
-      
-      sendResponse({ success: true, message: 'Blocking stopped' });
-      break;
-      
-    case 'SYNC_SETTINGS':
-      isActive = request.data.active;
-      blockedSites = request.data.blockedSites || [];
-      currentSessionId = request.data.sessionId;
-      console.log('🔄 Settings synced:', request.data);
-      
-      chrome.storage.local.set({
-        isActive: isActive,
-        blockedSites: blockedSites,
-        sessionId: currentSessionId
-      });
-      
-      sendResponse({ success: true, message: 'Settings synced' });
-      break;
-      
-    case 'GET_STATUS':
-      sendResponse({
-        isActive: isActive,
-        blockedSites: blockedSites,
-        sessionId: currentSessionId,
-        blockedTabsCount: blockedTabs.size
-      });
-      break;
-      
-    default:
-      console.warn('❓ Unknown message type:', request.type);
-      sendResponse({ error: 'Unknown message type' });
-  }
-  
-  return true; // Keep message channel open for async response
-});
+// ✅ FIXED: Add proper session stats for popup
+let sessionStats = {
+  focusScore: 85,
+  sessionDuration: 0,
+  distractionAttempts: 0,
+  blockedSites: 0,
+  sessionStartTime: null,
+  isActive: false,
+  task: '',
+  recentBlocks: []
+};
 
-// Listen for tab updates (URL changes)
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (!isActive || !changeInfo.url || blockedSites.length === 0) {
-    return;
-  }
+// ✅ FIXED: Update handleMessage function
+const handleMessage = (message, sender, sendResponse) => {
+  console.log('📨 Background received:', message?.type);
   
-  const currentUrl = changeInfo.url.toLowerCase();
-  console.log('🔍 Checking URL:', currentUrl);
-  
-  // Check if URL matches any blocked site
-  const isBlocked = blockedSites.some(site => {
-    const siteLower = site.toLowerCase();
-    return currentUrl.includes(siteLower) || 
-           currentUrl.includes(siteLower.replace('www.', '')) ||
-           currentUrl.startsWith(`https://${siteLower}`) ||
-           currentUrl.startsWith(`http://${siteLower}`);
-  });
-  
-  if (isBlocked) {
-    console.log('🚫 BLOCKING:', currentUrl);
-    blockedTabs.add(tabId);
-    
-    // Log the distraction
-    logDistraction(currentUrl, tabId);
-    
-    // Redirect to blocked page
-    const blockedPageUrl = chrome.runtime.getURL('blocked.html') + 
-                          '?site=' + encodeURIComponent(currentUrl) + 
-                          '&sessionId=' + encodeURIComponent(currentSessionId || '');
-    
-    chrome.tabs.update(tabId, { url: blockedPageUrl });
-    
-    // Show notification
-    chrome.notifications.create({
-      type: 'basic',
-      iconUrl: 'icon.png',
-      title: 'FocusFlow - Website Blocked',
-      message: `Blocked: ${new URL(currentUrl).hostname}`,
-      buttons: [
-        { title: 'Back to Focus' },
-        { title: 'Take Break' }
-      ]
-    });
-  }
-});
+  try {
+    switch (message?.type) {
+      case 'HEALTH_CHECK':
+      case 'PING':
+        sendResponse({ 
+          status: 'connected', 
+          pong: true, 
+          extensionId: chrome.runtime.id, 
+          timestamp: Date.now(),
+          ...sessionStats  // ✅ Include stats in ping response
+        });
+        return true;
 
-// Handle notification clicks
-chrome.notifications.onButtonClicked.addListener((notificationId, buttonIndex) => {
-  if (buttonIndex === 0) {
-    // Back to Focus - could redirect to focus page
-    console.log('User chose to go back to focus');
-  } else if (buttonIndex === 1) {
-    // Take Break
-    console.log('User chose to take a break');
-  }
-  chrome.notifications.clear(notificationId);
-});
+      case 'GET_STATUS':
+        // ✅ FIXED: Calculate session duration if active
+        if (sessionStats.isActive && sessionStats.sessionStartTime) {
+          sessionStats.sessionDuration = Math.floor((Date.now() - sessionStats.sessionStartTime) / 60000);
+        }
+        
+        // ✅ FIXED: Return exactly what popup expects
+        const statusResponse = {
+          success: true,
+          isConnected: true,
+          
+          // Session state
+          isBlocking: sessionState.isBlocking,
+          blockedSites: sessionState.blockedSites,
+          sessionId: sessionState.sessionId,
+          startTime: sessionState.startTime,
+          
+          // Stats that popup needs
+          focusScore: sessionStats.focusScore || 85,
+          sessionDuration: sessionStats.sessionDuration || 0,
+          distractions: sessionStats.distractionAttempts || 0,
+          blockedSitesCount: sessionStats.blockedSites || 0,
+          isActive: sessionStats.isActive || sessionState.isBlocking,
+          task: sessionStats.task || 'Focus sessie',
+          recentBlocks: sessionStats.recentBlocks || [],
+          
+          // Additional stats popup might want
+          stats: sessionStats,
+          timestamp: Date.now()
+        };
+        
+        console.log('📊 Sending status to popup:', statusResponse);
+        sendResponse(statusResponse);
+        return true;
 
-// Function to log distractions
-function logDistraction(site, tabId) {
-  const distractionData = {
-    site: site,
-    timestamp: Date.now(),
-    sessionId: currentSessionId,
-    tabId: tabId
-  };
-  
-  console.log('📝 Distraction logged:', distractionData);
-  
-  // Send to content script for localStorage sync
-  chrome.tabs.sendMessage(tabId, {
-    type: 'LOG_DISTRACTION',
-    data: distractionData
-  }).catch(() => {
-    // Ignore errors if content script not ready
-    console.log('Could not send message to content script');
-  });
-  
-  // Store in extension storage
-  chrome.storage.local.get(['distractionLog'], (result) => {
-    const log = result.distractionLog || [];
-    log.push(distractionData);
-    
-    // Keep only last 100 entries
-    if (log.length > 100) {
-      log.splice(0, log.length - 100);
+      case 'START_BLOCKING':
+        sessionState = { 
+          isBlocking: true, 
+          blockedSites: message.blockedSites || [], 
+          sessionId: message.sessionId || Date.now().toString(), 
+          startTime: Date.now() 
+        };
+        
+        // ✅ Update stats when blocking starts
+        sessionStats = {
+          ...sessionStats,
+          isActive: true,
+          sessionStartTime: Date.now(),
+          task: message.task || 'Focus sessie'
+        };
+        
+        chrome.storage.local.set({
+          focusflow_blocking_active: true,
+          focusflow_blocked_sites: sessionState.blockedSites,
+          focusflow_session_id: sessionState.sessionId,
+          focusflow_session_stats: sessionStats
+        }, () => {
+          broadcastToContentScripts({ 
+            type: 'UPDATE_BLOCKING_STATUS', 
+            isActive: true, 
+            blockedSites: sessionState.blockedSites 
+          });
+          sendResponse({ success: true, sessionId: sessionState.sessionId, stats: sessionStats });
+        });
+        return true;
+
+      case 'STOP_BLOCKING':
+        sessionState.isBlocking = false;
+        sessionState.blockedSites = [];
+        sessionStats.isActive = false;
+        
+        chrome.storage.local.set({ 
+          focusflow_blocking_active: false, 
+          focusflow_blocked_sites: [],
+          focusflow_session_stats: sessionStats
+        }, () => {
+          broadcastToContentScripts({ 
+            type: 'UPDATE_BLOCKING_STATUS', 
+            isActive: false, 
+            blockedSites: [] 
+          });
+          sendResponse({ success: true, finalStats: sessionStats });
+        });
+        return true;
+
+      case 'SITE_BLOCKED':
+        sessionStats.blockedSites++;
+        sessionStats.distractionAttempts++;
+        sessionStats.focusScore = Math.max(0, sessionStats.focusScore - 3);
+        
+        // ✅ Add to recent blocks list
+        const blockEntry = {
+          site: message.site,
+          url: message.url,
+          timestamp: Date.now(),
+          timeAgo: 'nu'
+        };
+        
+        sessionStats.recentBlocks = sessionStats.recentBlocks || [];
+        sessionStats.recentBlocks.unshift(blockEntry);
+        if (sessionStats.recentBlocks.length > 10) {
+          sessionStats.recentBlocks = sessionStats.recentBlocks.slice(0, 10);
+        }
+        
+        chrome.storage.local.set({ focusflow_session_stats: sessionStats });
+        logBlockedAttempt(message.site, message.url);
+        
+        console.log('🛡️ Site blocked:', message.site, 'Updated stats:', sessionStats);
+        sendResponse({ success: true, stats: sessionStats });
+        return true;
+
+      case 'SYNC_SETTINGS':
+        const active = !!message?.data?.active;
+        const sites = Array.isArray(message?.data?.blockedSites) ? message.data.blockedSites : [];
+        
+        sessionState.isBlocking = active;
+        sessionState.blockedSites = sites;
+        sessionStats.isActive = active;
+        
+        chrome.storage.local.set({ 
+          focusflow_blocking_active: active, 
+          focusflow_blocked_sites: sites,
+          focusflow_session_stats: sessionStats
+        }, () => {
+          broadcastToContentScripts({ 
+            type: 'UPDATE_BLOCKING_STATUS', 
+            isActive: active, 
+            blockedSites: sites 
+          });
+          sendResponse({ success: true, stats: sessionStats });
+        });
+        return true;
+
+      case 'RETURN_TO_FOCUS':
+      case 'START_BREAK':
+        if (sender.tab?.id) {
+          chrome.tabs.remove(sender.tab.id, () => 
+            sendResponse({ success: !chrome.runtime.lastError })
+          );
+          return true;
+        }
+        sendResponse({ success: true });
+        return true;
+
+      default:
+        console.log('❓ Unknown message type:', message?.type);
+        sendResponse({ success: false, error: 'Unknown message type' });
+        return false;
     }
-    
-    chrome.storage.local.set({ distractionLog: log });
+  } catch (e) {
+    console.error('❌ Background error:', e);
+    sendResponse({ success: false, error: e?.message || 'background error' });
+    return false;
+  }
+};
+
+// ✅ Setup message listeners
+try {
+  if (chrome.runtime.onMessage) {
+    chrome.runtime.onMessage.addListener(handleMessage);
+    console.log('✅ Internal message listener ready');
+  }
+} catch (error) {
+  console.error('❌ Error setting up listeners:', error);
+}
+
+// ✅ External messages from website
+try {
+  if (chrome.runtime.onMessageExternal) {
+    chrome.runtime.onMessageExternal.addListener((message, sender, sendResponse) => {
+      const origin = sender.origin || (sender.url ? new URL(sender.url).origin : '');
+      const allowed = ['https://focusflows.eu'];
+      
+      if (!allowed.includes(origin)) {
+        sendResponse({ success: false, error: 'Origin not allowed' });
+        return false;
+      }
+      
+      return handleMessage(message, sender, sendResponse);
+    });
+    console.log('✅ External message listener ready');
+  }
+} catch (error) {
+  console.error('❌ Error setting up external listeners:', error);
+}
+
+// ✅ Broadcast function (same as before)
+function broadcastToContentScripts(message) {
+  chrome.tabs.query({ url: ['http://*/*','https://*/*'] }, (tabs) => {
+    tabs.forEach((tab) => {
+      if (!tab.id) return;
+      
+      try {
+        chrome.tabs.sendMessage(tab.id, {
+          type: 'FOCUSFLOW_BACKGROUND_MESSAGE',
+          payload: message
+        }, () => {
+          if (chrome.runtime.lastError) { /* ignore */ }
+        });
+      } catch (error) {
+        console.error('Error broadcasting to tab:', tab.id, error);
+      }
+    });
   });
 }
 
-// Listen for tab removal to clean up
-chrome.tabs.onRemoved.addListener((tabId) => {
-  blockedTabs.delete(tabId);
-});
-
-// Restore state when extension starts
-chrome.runtime.onStartup.addListener(() => {
-  chrome.storage.local.get(['isActive', 'blockedSites', 'sessionId'], (result) => {
-    isActive = result.isActive || false;
-    blockedSites = result.blockedSites || [];
-    currentSessionId = result.sessionId || null;
-    
-    console.log('🔄 State restored:', { isActive, blockedSites, currentSessionId });
-  });
-});
-
-// Initialize on install
-chrome.runtime.onInstalled.addListener(() => {
-  console.log('✅ FocusFlow Extension installed and ready');
+function logBlockedAttempt(site, url) {
+  const attempt = { 
+    site, 
+    url, 
+    timestamp: Date.now(), 
+    sessionId: sessionState.sessionId 
+  };
   
-  chrome.storage.local.set({
-    isActive: false,
-    blockedSites: [],
-    sessionId: null,
-    distractionLog: []
+  chrome.storage.local.get(['focusflow_blocked_attempts'], (result) => {
+    const list = Array.isArray(result.focusflow_blocked_attempts) ? result.focusflow_blocked_attempts : [];
+    list.push(attempt);
+    if (list.length > 100) list.splice(0, list.length - 100);
+    chrome.storage.local.set({ focusflow_blocked_attempts: list });
   });
+}
+
+// ✅ Update stats timer
+setInterval(() => {
+  if (sessionStats.isActive && sessionStats.sessionStartTime) {
+    const oldDuration = sessionStats.sessionDuration;
+    sessionStats.sessionDuration = Math.floor((Date.now() - sessionStats.sessionStartTime) / 60000);
+    
+    if (sessionStats.sessionDuration !== oldDuration) {
+      chrome.storage.local.set({ focusflow_session_stats: sessionStats });
+    }
+  }
+}, 30000);
+
+// ✅ ENSURE: Message listener is always registered
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  console.log('📨 Background received:', message?.type);
+  
+  // Always return true to indicate async response
+  handleMessage(message, sender, sendResponse);
+  return true;
 });
 
-// Keep service worker alive
-chrome.runtime.onConnect.addListener((port) => {
-  console.log('🔌 Port connected:', port.name);
-});
+// ✅ KEEP-ALIVE: Prevent service worker from sleeping during critical operations
+const keepAlive = () => {
+  chrome.runtime.getPlatformInfo(() => {
+    // This simple operation keeps the service worker active
+  });
+};
+
+// Keep alive during active sessions
+setInterval(keepAlive, 25000); // Every 25 seconds
+
+
+// ✅ Initialize on startup  
+const initializeBackground = () => {
+  console.log('🔧 Initializing background script...');
+  chrome.storage.local.set({ 
+    focusflow_blocking_active: false, 
+    focusflow_blocked_sites: [] 
+  });
+  console.log('✅ Background script initialized');
+};
+
+initializeBackground();
+
+// ✅ Handle extension events
+if (chrome.runtime.onStartup) {
+  chrome.runtime.onStartup.addListener(() => {
+    console.log('🔄 Extension startup');
+    initializeBackground();
+  });
+}
+
+if (chrome.runtime.onInstalled) {
+  chrome.runtime.onInstalled.addListener((details) => {
+    console.log('📦 Extension installed/updated:', details.reason);
+    initializeBackground();
+  });
+}
+
+console.log('✅ FocusFlow Background Script Ready - Fixed Popup Communication');

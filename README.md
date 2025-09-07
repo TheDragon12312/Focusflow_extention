@@ -154,6 +154,6 @@ Documentation: Check the README file for additional information
 
 Support: Contact the developer through GitHub or the FocusFlow website
 
-🎉 Congratulations! Your FocusFlow extension is now installed and ready to help you stay focused. Visit focusflow.alwaysdata.net to start your first focus session and sync with the browser extension.
+🎉 Congratulations! Your FocusFlow extension is now installed and ready to help you stay focused. Visit focusflows.eu to start your first focus session and sync with the browser extension.
 
 💡 Pro Tip: Consider bookmarking the GitHub releases page to easily check for updates to the extension.
